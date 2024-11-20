@@ -2,9 +2,11 @@ library(shiny)
 library(tidyverse)
 library(readxl)
 library(lubridate)
+library(bslib)
 
 # UI - user interface
-ui <- fluidPage(
+ui <- page_sidebar(
+  title = "D&D Dice Roll Analysis",
   
   # sidebar on the left where users can select info
   sidebar = sidebar(
@@ -20,32 +22,48 @@ ui <- fluidPage(
                 choices = c("Rolls by Die Type" = "die_type",
                             "Rolls by Die Set" = "die_set",
                             "Rolls by Campaign" = "campaign",
-                            "Rolls by Session" = "session",
+                            "Rolls by Session" = "sess",
                             "Rolls Over Time" = "date")),
     
     # create a second drop down for each choice
     # die_type conditional panel for second drop down 
     conditionalPanel(
-      condition = "input.variable == die_type",
+      condition = "input.variable == 'die_type'",
       selectInput("selected_type", "Select Die Type:", 
                   choices = c("d4", "d6", "d8", "d10", "d%%", "d12", "d20"))
     ),
     
     # die_set conditional panel for second drop down
     conditionalPanel(
-      condition = "input.variable == die_set",
-      selectInput("selected_set", "Select Die Set:")
+      condition = "input.variable == 'die_set'",
+      selectInput("selected_set", "Select Die Set:",
+                  choices = NULL)
       # need to make it either text 
-      #or read the input dataset and give dependent options
+      # or read the input dataset and give dependent options
+    ),
+    
+    # campaign conditional panel for second drop down
+    conditionalPanel(
+      condition = "input.variable == 'campaign'",
+      selectInput("selected_campaign", "Select Campaign ID:",
+                  choices = NULL)
     )
     
     # filter ID_Number by campaign and session for conditional payments
-    
+  
+  ),
+  
+  # main panel with plot output
+  card(
+    card_header("Dice Roll Distribution"),
+    plotOutput("dice_plot")
     # date conditional panel for second drop down
     # maybe range or just one date?
+
   )
   
 )
+  
 
 # server - backend
 server <- function(input, output, session){
@@ -53,11 +71,23 @@ server <- function(input, output, session){
   # Read and process uploaded data
   dice_data <- reactive({
     req(input$upload)
-    
     df <- read_excel(input$upload$datapath)
-    df$Date <- as.Date(df$Date)
     return(df)
     
+  })
+  
+  # update choices based on uploaded data for DieType
+  observe({
+    req(dice_data())
+    updateSelectInput(session, "selected_type",
+                      choices = unique(dice_data()$DieType))
+  })
+  
+  # update choices based on uploaded data for DieSet
+  observe({
+    req(dice_data())
+    updateSelectInput(session, "selected_set",
+                      choices = unique(dice_data()$DieSet))
   })
   
   # Generate the plot based on user input
@@ -68,30 +98,28 @@ server <- function(input, output, session){
     if (input$variable == "die_type"){
       req(input$selected_type)
       
-      data <- dice_data()
-      
       # plotting DieRoll by DieType
-      ggplot(data %>% filter = DieType == input$selected_type, 
-             mapping = aes(x = DieRoll)) +
+      ggplot(dice_data() %>% filter(DieType == input$selected_type), 
+             aes(x = DieRoll)) +
         # fill by what? options?
-        geom_bar(aes(fill = DieSet)) +
+        geom_bar() + 
         labs(title = paste("Distribution of", input$selected_type, "Rolls"),
              x = "Roll Value",
              y = "Number of Times Rolled")
-      # add scale somehow for each graph
+      # add scale somehow for each graph, hardset scale for each die type
+      # dropdown dependent on order produced by excel sheet, order it by number
+      # make scale free
       
       # renders plots based on user-specified die_set
     } else if (input$variable == "die_set"){
       req(input$selected_set)
       
-      data <- dice_data()
-      
       # plotting DieRoll by DieSet
-      ggplot(data %>% filter = DieSet = input$selected_set,
-             mapping = aes(x = DieRoll)) +
+      ggplot(dice_data() %>% filter(DieSet == input$selected_set),
+             aes(x = DieRoll)) +
         geom_bar() +
         # offer option to only do one DieType?
-        facet_wrap(~DieType, scales = "free_x") +
+        facet_wrap(~DieType, scales = "free") +
         labs(title = paste("Distribution of", input$selected_set, "Set"),
              x = "Roll Value",
              y = "Number of Time Rolled")
