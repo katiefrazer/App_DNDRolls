@@ -190,8 +190,8 @@ server <- function(input, output, session){
     ggplot(filtered_data, aes(x = DieRoll)) +
       geom_bar() +
       facet_wrap(~DieType, scales = "free") +
-      labs(title = paste("Distribution of Die Rolls for Campaign", input$specified_campaign, 
-                         "Session", input$specified_session),
+      labs(title = paste("Distribution of Die Rolls for Campaign", input$session_campaign, 
+                         "Session", input$selected_session),
            x = "Roll Value",
            y = "Number of Times Rolled")
     
