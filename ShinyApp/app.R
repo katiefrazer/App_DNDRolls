@@ -1,3 +1,5 @@
+# Author: Katie Frazer
+
 library(shiny)
 library(tidyverse)
 library(readxl)
