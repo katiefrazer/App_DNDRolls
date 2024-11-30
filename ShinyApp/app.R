@@ -71,10 +71,29 @@ ui <- page_sidebar(
   
   ),
   
-  # main panel with plot output
-  card(
-    card_header("Dice Roll Distribution"),
-    plotOutput("dice_plot")
+  
+  # creating tabs for plot, summary statistics, and analysis
+  navset_card_tab(
+    # plot output, visual representation, where the graphs will be
+    nav_panel(
+      title = "Visual Representation",
+      card_header("Visual Representation"),
+      plotOutput("dice_plot")
+    ),
+    
+    # summary statistics, numerical representation, summary of input data relevance
+    nav_panel(
+      title = "Summary Statistics",
+      card_header("Summary Statistics"),
+      tableOutput("summary_stats")
+    ),
+    
+    # data analysis, some analysis of the data to present useful conclusions to user
+    nav_panel(
+      title = "Analysis",
+      card_header("Statistical Analysis"),
+      tableOutput("analysis_table")
+    )
   )
   
 )
@@ -91,6 +110,32 @@ server <- function(input, output, session){
     return(df)
     
   })
+  
+  # create filtered_data reactive to use across all outputs
+  # filtered_data is to make all the facet_wrap graphs appear in specified order
+  filtered_data <- reactive({
+    req(dice_data())
+    
+    if (input$variable == "die_type"){
+      dice_data() %>%
+        filter(DieType == input$selected_type)
+    } else if (input$variable == "die_set"){
+      dice_data() %>%
+        filter(DieSet == input$selected_set)
+    } else if (input$variable == "campaign"){
+      dice_data() %>%
+        filter(Campaign == input$selected_campaign)
+    } else if (input$variable == "sess"){
+      dice_data() %>%
+        filter(Campaign == input$session_campaign,
+               Session == input$selected_session)
+    } else if (input$variable == "date"){
+      dice_data() %>%
+        filter(Date >= input$date_range[1],
+               Date <= input$date_range[2])
+    }
+  })
+  
   
   # update choices based on uploaded data for DieType, DieSet, Campaign, Date
   observe({
@@ -119,107 +164,40 @@ server <- function(input, output, session){
                       choices = sessions)
   })
   
-  # Generate the plot based on user input
+  # Visual Representation
+  #Generate the plot based on user input
   output$dice_plot <- renderPlot({
-    req(dice_data())
+    req(filtered_data())
     
   if (input$variable == "die_type"){
-    req(input$selected_type)
-    
-    filtered_data <- dice_data() %>%
-      filter(DieType == input$selected_type)
-    
-    ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar(aes(fill = DieSet)) + 
+    ggplot(filtered_data(), aes(x = DieRoll)) +
+      geom_bar() + 
       labs(title = paste("Distribution of", input$selected_type, "Rolls"),
            x = "Roll Value",
            y = "Number of Times Rolled")
-    # add scale somehow for each graph, hardset scale for each die type
-    # dropdown dependent on order produced by excel sheet, order it by number
-    # make scale free
-  } else if (input$variable == "die_set"){
-    req(input$selected_set)
     
-    # adding this variable so the facet_wrap is in my specified order
+  } else {
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
     
-    filtered_data <- dice_data() %>%
-      filter(DieSet == input$selected_set) %>%
-      # mutating so facet_wrap is in my specified order
-      mutate(across(DieType, ~factor(., levels = neworder)))
-    
-    # plotting DieRoll by DieSet, faceted by DieType
-    ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar() +
-      # offer option to only do one DieType?
-      facet_wrap(~DieType, scales = "free") +
-      labs(title = paste("Distribution of", input$selected_set, "Die Set"),
-           x = "Roll Value",
-           y = "Number of Time Rolled")
-    
-    # renders plots based on user-specified campaign
-  } else if (input$variable == "campaign"){
-    req(input$selected_campaign)
-    
-    # adding this variable so the facet_wrap is in my specified order
-    neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
-    
-    filtered_data <- dice_data() %>%
-      filter(Campaign == input$selected_campaign) %>%
-      # mutating so facet_wrap is in my specified order
-      mutate(across(DieType, ~factor(., levels = neworder)))
-    
-    # plotting DieRoll by Campaign, facet by DieType
-    ggplot(filtered_data, aes(x = DieRoll)) +
+    filtered_data() %>%
+      mutate(across(DieType, ~factor(., levels = neworder))) %>%
+      ggplot(aes(x = DieRoll)) +
       geom_bar(aes(fill = DieSet)) +
       facet_wrap(~DieType, scales = "free") +
-      labs(title = paste("Distribution of Die Rolls in the", input$selected_campaign, "Campaign"))
-    
-    # renders plots based on user-specified campaign & session
-  } else if (input$variable == "sess"){
-    req(input$selected_campaign, input$selected_session)
-    
-    # adding this variable so the facet_wrap is in my specified order
-    neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
-    
-    filtered_data <- dice_data() %>%
-      filter(Campaign == input$session_campaign,
-             Session == input$selected_session) %>%
-      # mutating so facet_wrap is in my specified order
-      mutate(across(DieType, ~factor(., levels = neworder)))
-    
-    # plotting DieRoll by a specific Campaign-Session combo, facet by DieType
-    ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar(aes(fill = DieSet)) +
-      facet_wrap(~DieType, scales = "free") +
-      labs(title = paste("Distribution of Die Rolls for Campaign", input$session_campaign, 
-                         "Session", input$selected_session),
-           x = "Roll Value",
-           y = "Number of Times Rolled")
-    
-    # renders plots based on user-specified date
-  } else if (input$variable == "date"){
-    req(input$date_range)
-    
-    # adding this variable so the facet_wrap is in my specified order
-    neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
-    
-    filtered_data <- dice_data() %>%
-      filter(Date >= input$date_range[1],
-             Date <= input$date_range[2]) %>%
-      # mutating so facet_wrap is in my specified order
-      mutate(across(DieType, ~factor(., levels = neworder)))
-    
-    # plotting DieRoll by Date, faceted by DieType
-    ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar(aes(fill = DieSet)) +
-      facet_wrap(~DieType, scales = "free") +
-      labs(title = paste("Distribution of Die Rolls From", input$date_range[1], "to", input$date_range[2]),
-           x = "Roll Value",
-           y = "Number of Times Rolled")
+      labs(title = case_when(
+        input$variable == "die_set" ~ paste("Distribution of the", input$selected_set, "Die Set"),
+        input$variable == "campaign" ~ paste("Distribution of the", input$selected_campaign, "Campaign"),
+        input$variable == "sess" ~ paste("Distribution of the", input$session_campaign, "Session", input$selected_session),
+        input$variable == "date" ~ paste("Distribution from", input$date_range[1], "to", input$date_range[2])
+        ),
+        x = "Roll Value",
+        y = "Number of Times Rolled"
+      )
   }
-      
+    
+    
   })
+
 }
 
 shinyApp(ui, server)
@@ -252,3 +230,11 @@ shinyApp(ui, server)
 # do i need to add another card to the main info?
 
 # add template and directions for excel sheet
+
+# add custom theme
+
+# check to see what happens if sort other options than just session
+
+# add scale somehow for each graph, hardset scale for each die type
+
+# dropdown dependent on order produced by excel sheet, order it by number
