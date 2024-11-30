@@ -3,9 +3,11 @@ library(tidyverse)
 library(readxl)
 library(lubridate)
 library(bslib)
+library(viridis)
 
 # UI - user interface
 ui <- page_sidebar(
+  
   title = "D&D Dice Roll Analysis",
   
   # sidebar on the left where users can select info
@@ -128,7 +130,7 @@ server <- function(input, output, session){
       filter(DieType == input$selected_type)
     
     ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar() + 
+      geom_bar(aes(fill = DieSet)) + 
       labs(title = paste("Distribution of", input$selected_type, "Rolls"),
            x = "Roll Value",
            y = "Number of Times Rolled")
@@ -169,7 +171,7 @@ server <- function(input, output, session){
     
     # plotting DieRoll by Campaign, facet by DieType
     ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar() +
+      geom_bar(aes(fill = DieSet)) +
       facet_wrap(~DieType, scales = "free") +
       labs(title = paste("Distribution of Die Rolls in the", input$selected_campaign, "Campaign"))
     
@@ -188,7 +190,7 @@ server <- function(input, output, session){
     
     # plotting DieRoll by a specific Campaign-Session combo, facet by DieType
     ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar() +
+      geom_bar(aes(fill = DieSet)) +
       facet_wrap(~DieType, scales = "free") +
       labs(title = paste("Distribution of Die Rolls for Campaign", input$session_campaign, 
                          "Session", input$selected_session),
@@ -210,7 +212,7 @@ server <- function(input, output, session){
     
     # plotting DieRoll by Date, faceted by DieType
     ggplot(filtered_data, aes(x = DieRoll)) +
-      geom_bar() +
+      geom_bar(aes(fill = DieSet)) +
       facet_wrap(~DieType, scales = "free") +
       labs(title = paste("Distribution of Die Rolls From", input$date_range[1], "to", input$date_range[2]),
            x = "Roll Value",
@@ -236,3 +238,17 @@ shinyApp(ui, server)
 # tabsets on the right (tabs: plots, tables, summary)
 
 # conditional formatting for DieType, DieSet, Campaign, Session, Date
+
+# do not have conditonal panels set already
+
+# give an error if they select drop downs but no excel sheet
+
+# color code session and campaign
+
+# black with viridis color palette
+
+# add summary statistics table
+
+# do i need to add another card to the main info?
+
+# add template and directions for excel sheet
