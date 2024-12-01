@@ -177,6 +177,15 @@ server <- function(input, output, session){
            x = "Roll Value",
            y = "Number of Times Rolled")
     
+  } else if (input$variable == "die_set"){
+    ggplot(filtered_data(), aes(x = DieRoll)) +
+      geom_bar(aes(fill = DieSet)) +
+      facet_wrap(~DieType, scales = "free") +
+      theme(legend.position = "none") +
+      labs(title = paste("Distribution of the", input$selected_set, "Die Set"),
+           x = "Roll Value",
+           y = "Number of Times Rolled")
+    
   } else {
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
     
@@ -186,7 +195,7 @@ server <- function(input, output, session){
       geom_bar(aes(fill = DieSet)) +
       facet_wrap(~DieType, scales = "free") +
       labs(title = case_when(
-        input$variable == "die_set" ~ paste("Distribution of the", input$selected_set, "Die Set"),
+        #input$variable == "die_set" ~ paste("Distribution of the", input$selected_set, "Die Set"),
         input$variable == "campaign" ~ paste("Distribution of the", input$selected_campaign, "Campaign"),
         input$variable == "sess" ~ paste("Distribution of the", input$session_campaign, "Session", input$selected_session),
         input$variable == "date" ~ paste("Distribution from", input$date_range[1], "to", input$date_range[2])
