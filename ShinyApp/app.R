@@ -213,7 +213,6 @@ server <- function(input, output, session){
     }
     
     paste0(
-      "Overall Summary:\n\n",
       "Total number of rolls: ", total_rolls, "\n",
       "Number of unique die sets: ", unique_die_sets, "\n",
       "Number of unique campaigns: ", unique_campaigns, "\n",
@@ -242,7 +241,11 @@ server <- function(input, output, session){
   
   # Statistical Analysis
   # Generate some conclusions about the data
-  
+  #output$analysis_table <- renderTable({
+   # req(filtered_data())
+    
+    
+  #})
 
 }
 
