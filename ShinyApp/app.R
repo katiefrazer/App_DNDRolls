@@ -276,4 +276,6 @@ shinyApp(ui, server)
 
 # dropdown dependent on order produced by excel sheet, order it by number
 
+# add mode to summary statistics
+
 # die_set does not need to be in the else portion, would prefer it as it's own if
