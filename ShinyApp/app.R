@@ -3,6 +3,7 @@ library(tidyverse)
 library(readxl)
 library(lubridate)
 library(bslib)
+library(bsicons)
 library(viridis)
 
 # UI - user interface
@@ -12,9 +13,6 @@ ui <- page_sidebar(
   
   # sidebar on the left where users can select info
   sidebar = sidebar(
-    
-    # include description of purpose somewhere
-    # include template Excel sheet for people to download from
     
     # accept Excel sheet from 
     fileInput("upload", "Upload Excel Sheet", accept = c(".xlsx", ".xls")),
@@ -66,39 +64,65 @@ ui <- page_sidebar(
       dateRangeInput("date_range", "Select Date Range:",
                      start = NULL, end = NULL)
     )
-    
-    # filter ID_Number by campaign and session for conditional payments
   
   ),
   
-  
-  # creating tabs for plot, summary statistics, and analysis
-  navset_card_tab(
-    # plot output, visual representation, where the graphs will be
-    nav_panel(
-      title = "Plot",
-      #card_header("Visual Representation"),
-      plotOutput("dice_plot")
+  layout_column_wrap(
+    width = 1,
+    fill = FALSE,
+    style = css(grid_template_rows = "0.18fr 0.67fr 0.27fr"),
+    
+    # Top row with metrics plots
+    layout_column_wrap(
+      width = 1/3,
+      
+      value_box(
+        title = "Total Rolls",
+        value = textOutput("total_rolls"),
+        #showcase = bsicons::bs_icon("dice-6")
+        #theme = "bg-gradient-purple-indigo"
+        #theme = value_box_theme(bg = "#453781FF", fg = "#000000")
+      ),
+      
+      value_box(
+        title = "Unique Die Sets",
+        value = textOutput("unique_sets"),
+        #theme = "bg-gradient-blue-teal"
+        #theme = value_box_theme(bg = "#287D8EFF", fg = "#000000")
+      ),
+      value_box(
+        title = "Unique Campaigns",
+        value = textOutput("unique_campaigns"),
+        #theme = "bg-gradient-teal-green"
+       # theme = value_box_theme(bg = "#3CBB75FF", fg = "#000000")
+      ),
+      
+      ),
+    
+    # Main dice distribution plot
+    layout_column_wrap(
+      card(
+        full_screen = TRUE,
+        card_header("Visual Representation"),
+        plotOutput("dice_plot")
+      )
     ),
     
-    # summary statistics, numerical representation, summary of input data relevance
-    nav_panel(
-      title = "Summary",
-      #card_header("Summary Statistics"),
-      verbatimTextOutput("summary_text"),
-      tableOutput("summary_stats")
-    ),
-    
-    # data analysis, some analysis of the data to present useful conclusions to user
-    nav_panel(
-      title = "Analysis",
-      #card_header("Statistical Analysis"),
-      tableOutput("analysis_table")
+    # Summary Statistics Table
+    layout_column_wrap(
+      card(
+        full_screen = TRUE,
+        card_header("Summary Statistics"),
+        tableOutput("summary_stats")
+      )
     )
+    
+          
   )
   
 )
   
+    
 
 # server - backend
 server <- function(input, output, session){
@@ -173,18 +197,24 @@ server <- function(input, output, session){
   if (input$variable == "die_type"){
     ggplot(filtered_data(), aes(x = DieRoll)) +
       geom_bar(aes(fill = DieSet)) + 
+      scale_fill_viridis(discrete = TRUE) +
       labs(title = paste("Distribution of", input$selected_type, "Rolls"),
            x = "Roll Value",
-           y = "Number of Times Rolled")
+           y = "Frequency Rolled")
     
   } else if (input$variable == "die_set"){
-    ggplot(filtered_data(), aes(x = DieRoll)) +
+    neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
+    
+    filtered_data() %>%
+      mutate(across(DieType, ~factor(., levels = neworder))) %>%
+      ggplot(aes(x = DieRoll)) +
       geom_bar(aes(fill = DieSet)) +
+      scale_fill_viridis(discrete = TRUE) +
       facet_wrap(~DieType, scales = "free") +
       theme(legend.position = "none") +
       labs(title = paste("Distribution of the", input$selected_set, "Die Set"),
            x = "Roll Value",
-           y = "Number of Times Rolled")
+           y = "Frequency Rolled")
     
   } else {
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
@@ -193,6 +223,7 @@ server <- function(input, output, session){
       mutate(across(DieType, ~factor(., levels = neworder))) %>%
       ggplot(aes(x = DieRoll)) +
       geom_bar(aes(fill = DieSet)) +
+      scale_fill_viridis(discrete = TRUE) +
       facet_wrap(~DieType, scales = "free") +
       labs(title = case_when(
         #input$variable == "die_set" ~ paste("Distribution of the", input$selected_set, "Die Set"),
@@ -201,35 +232,13 @@ server <- function(input, output, session){
         input$variable == "date" ~ paste("Distribution from", input$date_range[1], "to", input$date_range[2])
         ),
         x = "Roll Value",
-        y = "Number of Times Rolled"
+        y = "Frequency Rolled"
       )
   }
     
   })
-  
-  # Summary Statistics
-  # Generate summary statistics about user-selected input
-  output$summary_text <- renderText({
-    req(filtered_data())
-    
-    total_rolls <- nrow(filtered_data())
-    unique_die_sets <- length(unique(filtered_data()$DieSet))
-    unique_campaigns <- length(unique(filtered_data()$Campaign))
-    date_range <- if("Date" %in% names(filtered_data())){
-      paste(min(filtered_data()$Date), "to", max(filtered_data()$Date))
-    } else {
-      "N/A"
-    }
-    
-    paste0(
-      "Total number of rolls: ", total_rolls, "\n",
-      "Number of unique die sets: ", unique_die_sets, "\n",
-      "Number of unique campaigns: ", unique_campaigns, "\n",
-      "Date Range: ", date_range, "\n"
-    )
-  
-  })
-  
+
+  # summary statistics output
   output$summary_stats <- renderTable({
     req(filtered_data())
     
@@ -247,15 +256,29 @@ server <- function(input, output, session){
       ) %>%
       arrange(factor(DieType, levels = neworder))
   })
-  
-  # Statistical Analysis
-  # Generate some conclusions about the data
-  #output$analysis_table <- renderTable({
-   # req(filtered_data())
-    
-    
-  #})
 
+  
+  # total rolls output
+  output$total_rolls <- renderText({
+    req(filtered_data())
+    nrow(filtered_data())
+  })
+  
+  # total unique sets output
+  output$unique_sets <- renderText({
+    req(filtered_data())
+    length(unique(filtered_data()$DieSet))
+  })
+  
+  # total unique campaigns
+  output$unique_campaigns <- renderText({
+    req(filtered_data())
+    length(unique(filtered_data()$Campaign))
+  })
+  
+  
+  # dates played output
+  
 }
 
 shinyApp(ui, server)
@@ -272,11 +295,9 @@ shinyApp(ui, server)
 
 # give an error if they select drop downs but no excel sheet
 
-# color code session and campaign
-
 # black with viridis color palette
 
-# do i need to add another card to the main info?
+# give option for dark or light theme
 
 # add template and directions for excel sheet
 
@@ -288,6 +309,7 @@ shinyApp(ui, server)
 
 # dropdown dependent on order produced by excel sheet, order it by number
 
-# add mode to summary statistics
+# include description of purpose somewhere
+# include template Excel sheet for people to download from
 
-# die_set does not need to be in the else portion, would prefer it as it's own if
+# make margins between cards smaller
