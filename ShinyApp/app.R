@@ -19,15 +19,13 @@ ui <- page_navbar(
     # sidebar on the left where users can select info
     page_sidebar(
       
-      #class = "bslib-page-dashboard",
-      
       sidebar = sidebar(
         
         # accept excel sheet inputs
         fileInput("upload", "Upload Excel Sheet", accept = c(".xlsx", ".xls")),
         
         # initial dropdown for variable selection
-        selectInput("variable", "Select Variable Type to Analyze:",
+        selectInput("variable", "Select Variable to Analyze:",
                     choices = c("Rolls by Die Type" = "die_type",
                                 "Rolls by Die Set" = "die_set",
                                 "Rolls by Campaign" = "campaign",
@@ -76,34 +74,34 @@ ui <- page_navbar(
         
       ),
       
+      class = "bslib-page-dashboard",
+      
       layout_column_wrap(
         width = 1,
-        fill = FALSE,
-        style = css(grid_template_rows = "0.18fr 0.67fr 0.27fr"),
+        fill = TRUE,
+        # first row 1/5 the size of the second row
+        style = css(grid_template_rows = "0.2fr 1fr"),
         
         # Top row with metrics plots
         layout_column_wrap(
           width = 1/3,
           
+          # Total Rolls
           value_box(
             title = "Total Rolls",
-            value = textOutput("total_rolls"),
-            #showcase = bsicons::bs_icon("dice-6")
-            #theme = "bg-gradient-purple-indigo"
-            #theme = value_box_theme(bg = "#453781FF", fg = "#000000")
+            value = textOutput("total_rolls")
           ),
           
+          # Unique Die Sets
           value_box(
             title = "Unique Die Sets",
-            value = textOutput("unique_sets"),
-            #theme = "bg-gradient-blue-teal"
-            #theme = value_box_theme(bg = "#287D8EFF", fg = "#000000")
+            value = textOutput("unique_sets")
           ),
+          
+          # Unique Campaigns
           value_box(
             title = "Unique Campaigns",
-            value = textOutput("unique_campaigns"),
-            #theme = "bg-gradient-teal-green"
-            # theme = value_box_theme(bg = "#3CBB75FF", fg = "#000000")
+            value = textOutput("unique_campaigns")
           ),
           
         ),
@@ -115,44 +113,112 @@ ui <- page_navbar(
             card_header("Visual Representation"),
             plotOutput("dice_plot")
           )
-        ),
-        
-        # Summary Statistics Table
-        layout_column_wrap(
-          card(
-            full_screen = TRUE,
-            card_header("Summary Statistics"),
-            tableOutput("summary_stats")
-          )
         )
+        
       )
     )
   ),
     
-    # data dashboard
-    nav_panel(
-      title = "Data Explorer",
-      layout_column_wrap(
-        width = 1,
-        card(
-          card_header("Raw Data"),
-          DT::dataTableOutput("raw_data")
-        )
-      )
-    ),
-    
-    # about section
-    nav_panel(
-      title = "About",
+  # Data Explorer
+  nav_panel(
+    title = "Data Explorer",
+    class = "bslib-page-dashboard",
+      
+    layout_column_wrap(
+      width = 1,
+        
+      # summary statistics
       card(
-        card_header("About this App")
+        full_screen = TRUE,
+        card_header("Summary Statistics"),
+        tableOutput("summary_stats")
+      ),
+        
+      # raw data
+      card(
+        full_screen = TRUE,
+        card_header("Raw Data"),
+        DT::dataTableOutput("raw_data")
       )
-    ),
+    )
+  ),
+    
+  # how to panel
+  nav_panel(
+    title = "How to Use",
+    class = "bslib-page-dashboard",
+    
+    #layout_column_wrap(
+    #  width = 1,
+      
+      card(
+        card_header("How to Use"),
+        card_body(
+          tags$ol(
+            tags$li("Download the Excel file template and catalogue your die rolls!",
+                    br(),
+                    downloadButton("download_template", "Download Template"),
+                    br()),
+            tags$li("Make sure to be consistent with your naming scheme, and the preferred format:",
+                    tags$ul(
+                      tags$li("DieRoll: The die value rolled"),
+                      tags$li("DieType: The type of die (d4, d6, d8, d10, d%%, d12, d20)"),
+                      tags$li("DieSet: The dice set with which you rolled (Hi, dice goblins!)"),
+                      tags$li("Campaign: The name of the campaign"),
+                      tags$li("Session: The session number or name"),
+                      tags$li("Date: The date of the roll (YYYY-MM-DD format)")
+                    )),
+            tags$li("Navigate to the Overview tab, and upload your Excel file."),
+            tags$li("Use the dropdown menus to select what aspect of your dice rolls you want to analyze."),
+            tags$li("Explore the visualization and statistics in the Overview and Data Explorer tabs."),
+            tags$li("Have fun, nerds!")
+          )
+        )
+      ),
+      
+     # card(
+      #  card_header("Downloadable Excel Template"),
+       # card_body(
+        #  p("Download the following template for pre-set headers and proper formatting:"),
+         # downloadButton("download_template", "Download Template")
+        #)
+    #  )
+    #)
+  ),
   
+  # About section (using HTML for the formatting & such)
+  nav_panel(
+    title = "About",
+    class = "bslib-page-dashboard",
+      
+    card(
+      card_header("Purpose"),
+      card_body(
+        p("This Dungeons & Dragons Dice Roll Analysis App helps any player or Dungeon Master analyze their dice rolling patterns and statistics. Whether you're curious if you really did roll poorly in your last session or if one of your dice sets is luckier than the others, this tool can help you visualize and understand your dice rolling data.")
+        )
+      ),
+    
+    card(
+      card_header("Features"),
+      card_body(
+        p("PLACEHOLDER")
+        )
+      ),
+      
+    card(
+      card_header("About Me"),
+      card_body(          
+        p("My name is Katie Frazer, and I made this app! This app actually started as a passion project, originally intended to be for personal use. One session, shortly after I started playing Dungeons and Dragons, I was convinced that one particular die set had screwed me over big time. Out of frustration (and lots of curiosity), I started tracking my die rolls and developed code to analyze my results. It was working great, but I had encountered a small issue of some kind, and brought it up to one of my data science professors (Katie Willi). She suggested I create an R Shiny app, and here I am! I am incredibly proud of the time and effort I put into this, and I am loving how it turned out. I hope you all like it too!")
+        
+        )
+    )
+  ),
+    
   # add option to switch between dark and light mode
   nav_item(
     input_dark_mode(id = "dark_mode", mode = "light")
   )
+  
 )
       
   
@@ -227,7 +293,6 @@ server <- function(input, output, session){
   # Generate the user-specified plot 
   output$dice_plot <- renderPlot({
     req(filtered_data())
-    theme <- current_theme()
     
   if (input$variable == "die_type"){
     ggplot(filtered_data(), aes(x = DieRoll)) +
@@ -275,7 +340,6 @@ server <- function(input, output, session){
   # summary statistics output
   output$summary_stats <- renderTable({
     req(filtered_data())
-    theme <- current_theme()
     
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
     
@@ -317,19 +381,27 @@ server <- function(input, output, session){
   # raw data navset option
   output$raw_data <- DT::renderDataTable({
     req(filtered_data())
-    theme <- current_theme()
     
     DT::datatable(
       filtered_data(),
       options = list(
         pageLength = 5,
         lengthMenu = c(5, 10, 15, 20, 25, 30),
-        dom = "Brtipsl",
-        buttons = c("copy", "csv", "excel")
-      ),
-      extensions = "Buttons"
+        dom = "Brtipsl"
+      )
     ) 
   })
+  
+  #template download button
+  output$download_template <- downloadHandler(
+    filename = function() {
+      "DND_Roll_Tracker_Template.xlsx"
+    },
+    content = function(file) {
+      file.copy("DND_Roll_Tracker_Template.xlsx", file)
+    }
+    
+  )
 }
 
 shinyApp(ui, server)
@@ -341,12 +413,6 @@ shinyApp(ui, server)
 # make plots interactive
 
 # be able to share link
-
-# do not have conditonal panels set already
-
-# give an error if they select drop downs but no excel sheet
-
-# black with viridis color palette
 
 # add template and directions for excel sheet
 
@@ -361,6 +427,6 @@ shinyApp(ui, server)
 # include description of purpose somewhere
 # include template Excel sheet for people to download from
 
-# make margins between cards smaller
-
 # add light mode and dark mode changes to plots
+
+# linkedin, github
