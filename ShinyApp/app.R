@@ -3,124 +3,158 @@ library(tidyverse)
 library(readxl)
 library(lubridate)
 library(bslib)
-library(bsicons)
 library(viridis)
+library(DT)
 
 # UI - user interface
-ui <- page_sidebar(
+ui <- page_navbar(
   
-  title = "D&D Dice Roll Analysis",
+  title = "DND Dice Roll Analysis",
+  nav_spacer(),
   
-  # sidebar on the left where users can select info
-  sidebar = sidebar(
+  # main dashboard
+  nav_panel(
+    title = "Overview",
     
-    # accept Excel sheet from 
-    fileInput("upload", "Upload Excel Sheet", accept = c(".xlsx", ".xls")),
-    
-    # initial dropdown for variable selection
-    selectInput("variable", "Select Variable Type to Analyze:",
-                choices = c("Rolls by Die Type" = "die_type",
-                            "Rolls by Die Set" = "die_set",
-                            "Rolls by Campaign" = "campaign",
-                            "Rolls by Session" = "sess",
-                            "Rolls Over Time" = "date")),
-    
-    # create a second drop down for each choice
-    # die_type conditional panel for second drop down 
-    conditionalPanel(
-      condition = "input.variable == 'die_type'",
-      selectInput("selected_type", "Select Die Type:", 
-                  choices = c("d4", "d6", "d8", "d10", "d%%", "d12", "d20"))
-    ),
-    
-    # die_set conditional panel for second drop down
-    conditionalPanel(
-      condition = "input.variable == 'die_set'",
-      selectInput("selected_set", "Select Die Set:",
-                  choices = NULL)
-      # need to make it either text 
-      # or read the input dataset and give dependent options
-    ),
-    
-    # campaign conditional panel for second drop down
-    conditionalPanel(
-      condition = "input.variable == 'campaign'",
-      selectInput("selected_campaign", "Select Campaign:",
-                  choices = NULL)
-    ),
-    
-    # session conditional panel for second drop down
-    conditionalPanel(
-      condition = "input.variable == 'sess'",
-      selectInput("session_campaign", "Select Campaign:",
-                  choices = NULL),
-      selectInput("selected_session", "Select Session",
-                  choices = NULL)
-    ),
-    
-    # date conditional panel for second drop down
-    conditionalPanel(
-      condition = "input.variable == 'date'",
-      dateRangeInput("date_range", "Select Date Range:",
-                     start = NULL, end = NULL)
-    )
-  
-  ),
-  
-  layout_column_wrap(
-    width = 1,
-    fill = FALSE,
-    style = css(grid_template_rows = "0.18fr 0.67fr 0.27fr"),
-    
-    # Top row with metrics plots
-    layout_column_wrap(
-      width = 1/3,
+    # sidebar on the left where users can select info
+    page_sidebar(
       
-      value_box(
-        title = "Total Rolls",
-        value = textOutput("total_rolls"),
-        #showcase = bsicons::bs_icon("dice-6")
-        #theme = "bg-gradient-purple-indigo"
-        #theme = value_box_theme(bg = "#453781FF", fg = "#000000")
+      #class = "bslib-page-dashboard",
+      
+      sidebar = sidebar(
+        
+        # accept excel sheet inputs
+        fileInput("upload", "Upload Excel Sheet", accept = c(".xlsx", ".xls")),
+        
+        # initial dropdown for variable selection
+        selectInput("variable", "Select Variable Type to Analyze:",
+                    choices = c("Rolls by Die Type" = "die_type",
+                                "Rolls by Die Set" = "die_set",
+                                "Rolls by Campaign" = "campaign",
+                                "Rolls by Session" = "sess",
+                                "Rolls Over Time" = "date")),
+        
+        # create a second drop down for each choice
+        # die_type conditional panel for second drop down 
+        conditionalPanel(
+          condition = "input.variable == 'die_type'",
+          selectInput("selected_type", "Select Die Type:", 
+                      choices = c("d4", "d6", "d8", "d10", "d%%", "d12", "d20"))
+        ),
+        
+        # die_set conditional panel for second drop down
+        conditionalPanel(
+          condition = "input.variable == 'die_set'",
+          selectInput("selected_set", "Select Die Set:",
+                      choices = NULL)
+          # need to make it either text 
+          # or read the input dataset and give dependent options
+        ),
+        
+        # campaign conditional panel for second drop down
+        conditionalPanel(
+          condition = "input.variable == 'campaign'",
+          selectInput("selected_campaign", "Select Campaign:",
+                      choices = NULL)
+        ),
+        
+        # session conditional panel for second drop down
+        conditionalPanel(
+          condition = "input.variable == 'sess'",
+          selectInput("session_campaign", "Select Campaign:",
+                      choices = NULL),
+          selectInput("selected_session", "Select Session",
+                      choices = NULL)
+        ),
+        
+        # date conditional panel for second drop down
+        conditionalPanel(
+          condition = "input.variable == 'date'",
+          dateRangeInput("date_range", "Select Date Range:",
+                         start = NULL, end = NULL)
+        )
+        
       ),
       
-      value_box(
-        title = "Unique Die Sets",
-        value = textOutput("unique_sets"),
-        #theme = "bg-gradient-blue-teal"
-        #theme = value_box_theme(bg = "#287D8EFF", fg = "#000000")
-      ),
-      value_box(
-        title = "Unique Campaigns",
-        value = textOutput("unique_campaigns"),
-        #theme = "bg-gradient-teal-green"
-       # theme = value_box_theme(bg = "#3CBB75FF", fg = "#000000")
-      ),
-      
-      ),
-    
-    # Main dice distribution plot
-    layout_column_wrap(
-      card(
-        full_screen = TRUE,
-        card_header("Visual Representation"),
-        plotOutput("dice_plot")
-      )
-    ),
-    
-    # Summary Statistics Table
-    layout_column_wrap(
-      card(
-        full_screen = TRUE,
-        card_header("Summary Statistics"),
-        tableOutput("summary_stats")
-      )
-    )
-    
+      layout_column_wrap(
+        width = 1,
+        fill = FALSE,
+        style = css(grid_template_rows = "0.18fr 0.67fr 0.27fr"),
+        
+        # Top row with metrics plots
+        layout_column_wrap(
+          width = 1/3,
           
-  )
+          value_box(
+            title = "Total Rolls",
+            value = textOutput("total_rolls"),
+            #showcase = bsicons::bs_icon("dice-6")
+            #theme = "bg-gradient-purple-indigo"
+            #theme = value_box_theme(bg = "#453781FF", fg = "#000000")
+          ),
+          
+          value_box(
+            title = "Unique Die Sets",
+            value = textOutput("unique_sets"),
+            #theme = "bg-gradient-blue-teal"
+            #theme = value_box_theme(bg = "#287D8EFF", fg = "#000000")
+          ),
+          value_box(
+            title = "Unique Campaigns",
+            value = textOutput("unique_campaigns"),
+            #theme = "bg-gradient-teal-green"
+            # theme = value_box_theme(bg = "#3CBB75FF", fg = "#000000")
+          ),
+          
+        ),
+        
+        # Main dice distribution plot
+        layout_column_wrap(
+          card(
+            full_screen = TRUE,
+            card_header("Visual Representation"),
+            plotOutput("dice_plot")
+          )
+        ),
+        
+        # Summary Statistics Table
+        layout_column_wrap(
+          card(
+            full_screen = TRUE,
+            card_header("Summary Statistics"),
+            tableOutput("summary_stats")
+          )
+        )
+      )
+    )
+  ),
+    
+    # data dashboard
+    nav_panel(
+      title = "Data Explorer",
+      layout_column_wrap(
+        width = 1,
+        card(
+          card_header("Raw Data"),
+          DT::dataTableOutput("raw_data")
+        )
+      )
+    ),
+    
+    # about section
+    nav_panel(
+      title = "About",
+      card(
+        card_header("About this App")
+      )
+    ),
   
+  # add option to switch between dark and light mode
+  nav_item(
+    input_dark_mode(id = "dark_mode", mode = "light")
+  )
 )
+      
   
     
 
@@ -193,6 +227,7 @@ server <- function(input, output, session){
   # Generate the user-specified plot 
   output$dice_plot <- renderPlot({
     req(filtered_data())
+    theme <- current_theme()
     
   if (input$variable == "die_type"){
     ggplot(filtered_data(), aes(x = DieRoll)) +
@@ -200,7 +235,7 @@ server <- function(input, output, session){
       scale_fill_viridis(discrete = TRUE) +
       labs(title = paste("Distribution of", input$selected_type, "Rolls"),
            x = "Roll Value",
-           y = "Frequency Rolled")
+           y = "Frequency Rolled") 
     
   } else if (input$variable == "die_set"){
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
@@ -214,7 +249,7 @@ server <- function(input, output, session){
       theme(legend.position = "none") +
       labs(title = paste("Distribution of the", input$selected_set, "Die Set"),
            x = "Roll Value",
-           y = "Frequency Rolled")
+           y = "Frequency Rolled") 
     
   } else {
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
@@ -232,8 +267,7 @@ server <- function(input, output, session){
         input$variable == "date" ~ paste("Distribution from", input$date_range[1], "to", input$date_range[2])
         ),
         x = "Roll Value",
-        y = "Frequency Rolled"
-      )
+        y = "Frequency Rolled") 
   }
     
   })
@@ -241,6 +275,7 @@ server <- function(input, output, session){
   # summary statistics output
   output$summary_stats <- renderTable({
     req(filtered_data())
+    theme <- current_theme()
     
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
     
@@ -279,6 +314,22 @@ server <- function(input, output, session){
   
   # dates played output
   
+  # raw data navset option
+  output$raw_data <- DT::renderDataTable({
+    req(filtered_data())
+    theme <- current_theme()
+    
+    DT::datatable(
+      filtered_data(),
+      options = list(
+        pageLength = 5,
+        lengthMenu = c(5, 10, 15, 20, 25, 30),
+        dom = "Brtipsl",
+        buttons = c("copy", "csv", "excel")
+      ),
+      extensions = "Buttons"
+    ) 
+  })
 }
 
 shinyApp(ui, server)
@@ -297,8 +348,6 @@ shinyApp(ui, server)
 
 # black with viridis color palette
 
-# give option for dark or light theme
-
 # add template and directions for excel sheet
 
 # add custom theme
@@ -313,3 +362,5 @@ shinyApp(ui, server)
 # include template Excel sheet for people to download from
 
 # make margins between cards smaller
+
+# add light mode and dark mode changes to plots
