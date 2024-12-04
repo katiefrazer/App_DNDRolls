@@ -1,0 +1,12 @@
+name: DND_Dice_Roll_Analysis
+title: DND_Dice_Roll_Analysis
+username: katiefrazer
+account: katiefrazer
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13516204
+bundleId: 9458079
+url: https://katiefrazer.shinyapps.io/DND_Dice_Roll_Analysis/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
