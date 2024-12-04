@@ -10,13 +10,13 @@ library(ggdark)
 ui <- page_navbar(
   
   title = "DND Dice Roll Analysis",
-  nav_spacer(),
+  nav_spacer(), # moves navigation bar to the right
   
-  # main dashboard
+  # Overview Tab
   nav_panel(
     title = "Overview",
     
-    # sidebar on the left where users can select info
+    # sidebar where users can select info
     page_sidebar(
       
       sidebar = sidebar(
@@ -24,7 +24,7 @@ ui <- page_navbar(
         # accept excel sheet inputs
         fileInput("upload", "Upload Excel Sheet", accept = c(".xlsx", ".xls")),
         
-        # initial dropdown for variable selection
+        # initial dropdown
         selectInput("variable", "Select Variable to Analyze:",
                     choices = c("Rolls by Die Type" = "die_type",
                                 "Rolls by Die Set" = "die_set",
@@ -32,31 +32,28 @@ ui <- page_navbar(
                                 "Rolls by Session" = "sess",
                                 "Rolls Over Time" = "date")),
         
-        # create a second drop down for each choice
-        # die_type conditional panel for second drop down 
+        # second drop down - dietype
         conditionalPanel(
           condition = "input.variable == 'die_type'",
           selectInput("selected_type", "Select Die Type:", 
                       choices = c("d4", "d6", "d8", "d10", "d%%", "d12", "d20"))
         ),
         
-        # die_set conditional panel for second drop down
+        # second drop down - dieset
         conditionalPanel(
           condition = "input.variable == 'die_set'",
           selectInput("selected_set", "Select Die Set:",
                       choices = NULL)
-          # need to make it either text 
-          # or read the input dataset and give dependent options
         ),
         
-        # campaign conditional panel for second drop down
+        # second drop down - campaign
         conditionalPanel(
           condition = "input.variable == 'campaign'",
           selectInput("selected_campaign", "Select Campaign:",
                       choices = NULL)
         ),
         
-        # session conditional panel for second drop down
+        # second drop down - session
         conditionalPanel(
           condition = "input.variable == 'sess'",
           selectInput("session_campaign", "Select Campaign:",
@@ -65,22 +62,19 @@ ui <- page_navbar(
                       choices = NULL)
         ),
         
-        # date conditional panel for second drop down
+        # second drop down - date range
         conditionalPanel(
           condition = "input.variable == 'date'",
           dateRangeInput("date_range", "Select Date Range:",
                          start = NULL, end = NULL)
         )
-        
       ),
       
-      class = "bslib-page-dashboard",
+      class = "bslib-page-dashboard", # gray background behind cards
       
       layout_column_wrap(
         width = 1,
-        fill = TRUE,
-        # first row 1/5 the size of the second row
-        style = css(grid_template_rows = "0.2fr 1fr"),
+        style = css(grid_template_rows = "0.2fr 1fr"), # first row 1/5 that of second
         
         # Top row with metrics plots
         layout_column_wrap(
@@ -103,23 +97,20 @@ ui <- page_navbar(
             title = "Unique Campaigns",
             value = textOutput("unique_campaigns")
           ),
-          
         ),
         
-        # Main dice distribution plot
+        # Main distribution plot
         layout_column_wrap(
           card(
             full_screen = TRUE,
-            #card_header("Visual Representation"),
             plotOutput("dice_plot")
           )
         )
-        
       )
     )
   ),
     
-  # Data Explorer
+  # Data Explorer Tab
   nav_panel(
     title = "Data Explorer",
     class = "bslib-page-dashboard",
@@ -143,16 +134,14 @@ ui <- page_navbar(
     )
   ),
     
-  # how to panel
+  # How To Tab
   nav_panel(
     title = "How to Use",
     class = "bslib-page-dashboard",
-    
-    #layout_column_wrap(
-    #  width = 1,
       
       card(
-        card_header("How to Use"),
+        card_header("Instructions for Using this Website"),
+        # using html-shiny convertability 
         card_body(
           tags$ol(
             tags$li("Download the Excel file template and catalogue your die rolls!",
@@ -167,7 +156,8 @@ ui <- page_navbar(
                       tags$li("Campaign: The name of the campaign"),
                       tags$li("Session: The session number or name"),
                       tags$li("Date: The date of the roll (YYYY-MM-DD format)")
-                    )),
+                      )
+                    ),
             tags$li("Navigate to the Overview tab, and upload your Excel file."),
             tags$li("Use the dropdown menus to select what aspect of your dice rolls you want to analyze."),
             tags$li("Explore the visualization and statistics in the Overview and Data Explorer tabs."),
@@ -175,18 +165,9 @@ ui <- page_navbar(
           )
         )
       ),
-      
-     # card(
-      #  card_header("Downloadable Excel Template"),
-       # card_body(
-        #  p("Download the following template for pre-set headers and proper formatting:"),
-         # downloadButton("download_template", "Download Template")
-        #)
-    #  )
-    #)
-  ),
+   ),
   
-  # About section (using HTML for the formatting & such)
+  # About Tab 
   nav_panel(
     title = "About",
     class = "bslib-page-dashboard",
@@ -197,20 +178,29 @@ ui <- page_navbar(
         p("This Dungeons & Dragons Dice Roll Analysis App helps any player or Dungeon Master analyze their dice rolling patterns and statistics. Whether you're curious if you really did roll poorly in your last session or if one of your dice sets is luckier than the others, this tool can help you visualize and understand your dice rolling data.")
         )
       ),
-    
-    card(
-      card_header("Features"),
-      card_body(
-        p("PLACEHOLDER")
-        )
-      ),
       
     card(
       card_header("About Me"),
       card_body(          
-        p("My name is Katie Frazer, and I made this app! This app actually started as a passion project, originally intended to be for personal use. One session, shortly after I started playing Dungeons and Dragons, I was convinced that one particular die set had screwed me over big time. Out of frustration (and lots of curiosity), I started tracking my die rolls and developed code to analyze my results. It was working great, but I had encountered a small issue of some kind, and brought it up to one of my data science professors (Katie Willi). She suggested I create an R Shiny app, and here I am! I am incredibly proud of the time and effort I put into this, and I am loving how it turned out. I hope you all like it too!")
-        
+        p("My name is Katie Frazer, and I made this app! This app actually started as a passion project, originally intended to be for personal use. One session, shortly after I started playing Dungeons and Dragons, I was convinced that one particular die set had screwed me over big time. Out of frustration (and lots of curiosity), I started tracking my die rolls and developed code to analyze my results. It was working great, but I had encountered a small issue of some kind, and brought it up to one of my data science professors (Katie Willi). She suggested I create an R Shiny app, and here I am! I am incredibly proud of the time and effort I put into this, and I am loving how it turned out. I hope you all like it too!"),
+        tags$span(
+          "Here's my ",
+          tags$a(
+            href = "https://www.linkedin.com/in/katie-m-frazer",
+            "LinkedIn",
+            target = "_blank", # open link in new tab
+            style = "color = #0077B5"
+          ),
+          "and ",
+          tags$a(
+            href = "https://github.com/katiefrazer",
+            "GitHub",
+            target = "_blank",
+            style = "color = #0077B5"
+          ),
+          "!"
         )
+      )
     )
   ),
     
@@ -218,19 +208,17 @@ ui <- page_navbar(
   nav_item(
     input_dark_mode(id = "dark_mode", mode = "light")
   )
-  
 )
 
 # server - backend
 server <- function(input, output, session){
   
-  # Read and process uploaded data
+  # read and process uploaded data
   dice_data <- reactive({
     req(input$upload)
     df <- read_excel(input$upload$datapath)
     df$Date <- as.Date(df$Date, format = "%Y %m %d")
     return(df)
-    
   })
   
   # create filtered_data reactive to use across all outputs
@@ -258,8 +246,7 @@ server <- function(input, output, session){
     }
   })
   
-  
-  # update choices based on uploaded data for DieType, DieSet, Campaign, Date
+  # update choices based on uploaded data for DieType, DieSet, Campaign, Session, Date
   observe({
     req(dice_data())
     updateSelectInput(session, "selected_type",
@@ -275,6 +262,7 @@ server <- function(input, output, session){
                          end = max(dice_data()$Date))
   })
   
+  # pull unique session numbers and update selection
   observe({
     req(dice_data(), input$session_campaign)
     sessions <- dice_data() %>%
@@ -286,8 +274,25 @@ server <- function(input, output, session){
                       choices = sessions)
   })
   
-  # Visual Representation
-  # Generate the user-specified plot 
+  # card - total rolls
+  output$total_rolls <- renderText({
+    req(filtered_data())
+    nrow(filtered_data())
+  })
+  
+  # card - total unique sets
+  output$unique_sets <- renderText({
+    req(filtered_data())
+    length(unique(filtered_data()$DieSet))
+  })
+  
+  # card - total unique campaigns
+  output$unique_campaigns <- renderText({
+    req(filtered_data())
+    length(unique(filtered_data()$Campaign))
+  })
+  
+  # plot - data visualization 
   output$dice_plot <- renderPlot({
     req(filtered_data())
     
@@ -299,7 +304,6 @@ server <- function(input, output, session){
            x = "Roll Value",
            y = "Frequency Rolled",
            caption = "Generated by Katie Frazer's DND Dice Roll Analysis Website") 
-    
   } else {
     neworder <- c("d4", "d6", "d8", "d10", "d%%", "d12", "d20")
     
@@ -332,10 +336,9 @@ server <- function(input, output, session){
       theme(plot.title = element_text(size = "20"),
             axis.title = element_text(size = "12"))
   }
-    
   })
 
-  # summary statistics output
+  # table - summary statistics
   output$summary_stats <- renderTable({
     req(filtered_data())
     
@@ -353,30 +356,8 @@ server <- function(input, output, session){
       ) %>%
       arrange(factor(DieType, levels = neworder))
   })
-
   
-  # total rolls output
-  output$total_rolls <- renderText({
-    req(filtered_data())
-    nrow(filtered_data())
-  })
-  
-  # total unique sets output
-  output$unique_sets <- renderText({
-    req(filtered_data())
-    length(unique(filtered_data()$DieSet))
-  })
-  
-  # total unique campaigns
-  output$unique_campaigns <- renderText({
-    req(filtered_data())
-    length(unique(filtered_data()$Campaign))
-  })
-  
-  
-  # dates played output
-  
-  # raw data navset option
+  # table - raw data
   output$raw_data <- renderTable({
     req(filtered_data())
     
@@ -405,13 +386,13 @@ shinyApp(ui, server)
 # recruit Luke and Zach to actually make it an app?
 # make the GitHub repository private if end up charging like friends suggest
 
-
 # UI
 # make the website prettier
 # recruit Valen for ui stuff
 
 # SIDEBAR
 # sort options after uploading excel sheet (ex. session)
+# give notification if they didn't upload an excel sheet
 
 # PLOTS
 # make people able to download plots
@@ -419,7 +400,6 @@ shinyApp(ui, server)
 # hardset each scale for each die type (supposedly difficult)
 # get rid of the line around the plots when switch to dark mode
 # fix legend.position = "none" for dieset
-
 
 # TABLES
 # make tables interactable (package: DT)
@@ -429,5 +409,4 @@ shinyApp(ui, server)
 # make template button in less weird location
 
 # ABOUT
-# add linkedin and github links
-# add Features to the features tab 
+# add acknowledgements
